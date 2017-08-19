@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <style media="screen">
+      *{margin: 0;padding: 0;}
+      .box {
+        position: relative;
+        margin: 50px auto;
+        width: 800px;
+      }
+      .score {
+        width: 800px;
+        height: 50px;
+        background: #ccc;
+      }
+
+      .score span {
+        float: right;
+        width: 200px;
+        height: 100%;
+        color: #fff;
+        text-align: center;
+        line-height: 50px;
+        font-size: 20px;
+      }
+      .score span i{
+        font-style: normal;
+        font-size: 25px;
+      }
+      .map {
+        width: 800px;
+        height: 400px;
+        background: #ddd;
+        position: absolute;
+      }
+
+      #btn {
+        position: absolute;
+        width: 80px;
+        height: 50px;
+        z-index: 999;
+        text-align: center;
+        color: #fff;
+        line-height: 50px;
+        font-size: 25px;
+        cursor: pointer;
+        border: none;
+        background: #ccc;
+      }
+      #btn:hover {
+        background: #bbb;
+      }
+    </style>
+  </head>
+  <body onload="reset()" onkeydown="changeDirect(event)">
+    <div class="box">
+      <button id="btn" onclick="start()">Go!</button>
+      <div class="score">
+
+        <span>score : <i id="score">0</i></span>
+        <span id="deff">easy</span>
+      </div>
+      <div class="map" id="map">
+
+      </div>
+    </div>
+    <script type="text/javascript">
+      var map = document.querySelector('#map');
+      var score = 0;
+      var snakeAction = null;
+      var speed = 300;
+      var times = [];
+      var timer = 0;
+      function Food(){
+        this.width = 20;
+        this.height = 20;
+        this.color = 'red';
+
+        this.display = function(){
+          var food_div = document.createElement('div');
+          this.x = Math.round(Math.random()*39);
+          this.y = Math.round(Math.random()*19);
+          food_div.style.width = this.width + "px";
+          food_div.style.height = this.height + "px";
+          food_div.style.left = this.width * this.x + "px";
+          food_div.style.top = this.height * this.y + "px";
+          food_div.style.position = 'absolute';
+          food_div.style.background = this.color;
+          food_div.setAttribute("fruit", 1);
+          food_div.style.borderRadius = '50%';
+          map.appendChild(food_div);
+          this.tag = food_div;
+        }
+
+        this.reDisplay = function(){
+          map.removeChild(this.tag);
+          this.display();
+        }
+      }
+
+      function Snake(){
+        this.width = 20;
+        this.height = 20;
+        this.direct = 'right'
+
+        this.body = [
+          {x:5,y:3,color:'green'},
+          {x:4,y:3,color:'yellowgreen'},
+          {x:3,y:3,color:'yellowgreen'}
+        ]
+
+        this.display = function(){
+          //console.log(this.body);
+          for(var i=0;i<this.body.length;i++){
+            var snake_div = document.createElement('div');
+            snake_div.style.width = this.width + "px";
+            snake_div.style.height = this.height + "px";
+            snake_div.style.borderRadius = '50%';
+            snake_div.style.left = this.width * this.body[i].x + "px";
+            snake_div.style.top = this.height * this.body[i].y + "px";
+            snake_div.style.position = 'absolute';
+            snake_div.style.background = this.body[i].color;
+            this.body[i].tag = snake_div;
+            map.appendChild(snake_div);
+          }
+        }
+
+        this.move = function(){
+          //console.log(this);
+          //console.log(this.body);
+          //console.log(this.body.length);
+          for(var i=this.body.length-1;i>0;i--){
+            this.body[i].x = this.body[i-1].x;
+            this.body[i].y = this.body[i-1].y;
+          }
+          //console.log(this.direct);
+          switch (this.direct) {
+              case 'right':
+                this.body[0].x+=1;
+                //console.log(this.body[0].x);
+                break;
+              case 'left':
+                this.body[0].x-=1;
+                break;
+              case 'up':
+                this.body[0].y-=1;
+                break;
+              case 'down':
+                this.body[0].y+=1;
+                //console.log(this.body[0].y);
+                break;
+          }
+
+          this.removeSnake();
+          this.display();
+
+          if(this.body[0].x<0 || this.body[0].x>39 || this.body[0].y<0 || this.body[0].y>19){
+           alert('Game Over');
+           clearInterval(snakeAction);
+            speed = 300;
+           this.removeSnake();
+           removeFood();
+           resetScore();
+           for(var i=timer;i<times.length;i++){
+             clearTimeout(times[i]);
+           }
+           reset();
+         }
+
+         for(var i = this.body.length-1; i>=4;i--){
+          if(this.body[0].x == this.body[i].x && this.body[0].y == this.body[i].y){
+            alert('Game Over');
+            clearInterval(snakeAction);
+            speed = 300;
+            this.removeSnake();
+            removeFood();
+            resetScore();
+            for(var j=timer;j<times.length;j++){
+              clearTimeout(times[j]);
+            }
+            reset();
+            break;
+          }
+        }
+
+        if(this.body[0].x == food.x && this.body[0].y == food.y){
+         this.body[this.body.length] = {x:0,y:0,color:'yellowgreen',tag:null};
+         score += 10;
+         document.querySelector('#score').innerHTML = score;
+         food.reDisplay();
+       }
+
+      }
+
+        this.removeSnake = function(){
+          for(var i=0;i<this.body.length;i++){
+            if(this.body[i].tag != null){
+              map.removeChild(this.body[i].tag);
+            }
+          }
+        }
+
+        this.setDirect = function(keycode){
+          //console.log(11);
+          switch (keycode) {
+            case 37:
+            //console.log(1111);
+            if(this.direct!='right'){
+              this.direct="left";
+            }
+            break;
+            case 38:
+            if(this.direct!='down'){
+              this.direct="up";
+            }
+            break;
+            case 39:
+            if(this.direct!='left'){
+              this.direct="right";
+            }
+            break;
+            case 40:
+            if(this.direct!='up'){
+              this.direct="down";
+            }
+            break;
+          }
+        }
+      }
+      function removeFood(){
+        //console.log(111);
+        console.log(map.children[0].getAttribute('fruit'));
+        for(var i=0;i<map.children.length;i++){
+          if(map.children[i].getAttribute('fruit') != null){
+            map.removeChild(map.children[i]);
+          }
+        }
+      }
+
+      function resetScore(){
+        document.querySelector('#score').innerHTML = 0;
+        document.querySelector('#deff').innerHTML = 'easy';
+        document.querySelector('#deff').style.color = '#fff';
+        document.querySelector('#deff').style.fontSize = '20px';
+        document.querySelector('#deff').style.fontWeight = '400';
+      }
+
+      function reset(){
+        document.querySelector('#btn').disabled = false;
+        food = new Food();
+        food.display();
+        snake = new Snake();
+        snake.display();
+      }
+      // setInterval(function(){
+      //   clearInterval(snakeAction);
+      //   if(score == 20){
+      //     speed = 200;
+      //   }
+      //   snakeAction = setInterval('snake.move()',speed);
+      // },500);
+
+
+      function start (){
+        document.querySelector('#btn').disabled = true;
+        snakeAction = setInterval('snake.move()',speed);
+
+          times[0] = setTimeout(function(){
+            clearInterval(snakeAction);
+            timer = 0;
+            speed = 200;
+            document.querySelector('#deff').innerHTML = 'normal';
+            document.querySelector('#deff').style.color = 'rgb(9, 100, 193)';
+            document.querySelector('#deff').style.fontSize = '23px';
+            document.querySelector('#deff').style.fontWeight = '500';
+            snakeAction = setInterval('snake.move()',speed);
+          },5000);
+
+
+          times[1] = setTimeout(function(){
+            clearInterval(snakeAction);
+            timer = 1;
+            speed = 150;
+            document.querySelector('#deff').innerHTML = 'difficult';
+            document.querySelector('#deff').style.color = 'rgb(145, 12, 217)';
+            document.querySelector('#deff').style.fontSize = '25px';
+            document.querySelector('#deff').style.fontWeight = '600';
+            snakeAction = setInterval('snake.move()',speed);
+          },10000);
+
+
+          times[2] = setTimeout(function(){
+            clearInterval(snakeAction);
+            timer = 2;
+            speed = 100;
+            document.querySelector('#deff').innerHTML = 'MAX1';
+            document.querySelector('#deff').style.color = 'rgb(236, 15, 207)';
+            document.querySelector('#deff').style.fontSize = '30px';
+            document.querySelector('#deff').style.fontWeight = '700';
+            snakeAction = setInterval('snake.move()',speed);
+          },15000);
+
+
+          times[3] = setTimeout(function(){
+            clearInterval(snakeAction);
+            timer = 3;
+            speed = 50;
+            document.querySelector('#deff').innerHTML = 'MAX2';
+            document.querySelector('#deff').style.color = 'rgb(236, 15, 75)';
+            document.querySelector('#deff').style.fontSize = '30px';
+            document.querySelector('#deff').style.fontWeight = '700';
+            snakeAction = setInterval('snake.move()',speed);
+          },20000);
+
+
+          times[4] = setTimeout(function(){
+            clearInterval(snakeAction);
+            timer = 4;
+            speed = 30;
+            document.querySelector('#deff').innerHTML = 'CRAZY';
+            document.querySelector('#deff').style.color = 'rgb(255, 0, 0)';
+            document.querySelector('#deff').style.fontSize = '30px';
+            document.querySelector('#deff').style.fontWeight = '800';
+            snakeAction = setInterval('snake.move()',speed);
+          },25000);
+
+
+      }
+      function changeDirect(event){
+        //console.log(11111);
+        snake.setDirect(event.keyCode);
+      }
+    </script>
+  </body>
+</html>
